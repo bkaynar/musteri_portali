@@ -21,12 +21,11 @@ class _MiktarGirisiState extends State<MiktarGirisi> {
   final TextEditingController _miktargirisi = TextEditingController();
   DateTime? selectedDate;
   String? selectedStation;
-  int selectedStationId = -1;
-
+  int? selectedIstasyonId;
   @override
   void initState() {
     super.initState();
-    fetchDropdownItems();
+    fetchIstasyonData();
     fetchBildirimVeriler();
   }
 
@@ -51,24 +50,15 @@ class _MiktarGirisiState extends State<MiktarGirisi> {
     }
   }
 
-  Future<void> fetchDropdownItems() async {
-    try {
-      final response = await http.get(Uri.parse(
-          'http://10.0.2.2:8080/istasyon/getByMusteriId/${musteriId}'));
+  Future<List<Map<String, dynamic>>> fetchIstasyonData() async {
+    final response = await http.get(
+        Uri.parse("http://10.0.2.2:8080/istasyon/getByMusteriId/${musteriId}"));
 
-      if (response.statusCode == 200) {
-        List<dynamic> data = json.decode(response.body);
-        List<String> items =
-            data.map<String>((item) => item['istasyon_adi'] as String).toList();
-
-        setState(() {
-          dropdownItems = items;
-        });
-      } else {
-        throw Exception('API isteği başarısız oldu');
-      }
-    } catch (error) {
-      print('Hata: $error');
+    if (response.statusCode == 200) {
+      final jsonData = json.decode(response.body);
+      return List<Map<String, dynamic>>.from(jsonData);
+    } else {
+      throw Exception('API çağrısı başarısız oldu');
     }
   }
 
@@ -111,117 +101,134 @@ class _MiktarGirisiState extends State<MiktarGirisi> {
       ),
       body: Column(
         children: [
-          Container(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(
-                horizontal: 16,
-              ),
-              child: Column(
-                children: [
-                  ListTile(
-                    title: const Text(
-                      'Gerçekleşen Tüketim',
-                      style:
-                          TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                    ),
-                    subtitle: const Text(
-                      'Tüketim miktarlarınızı görebilirsiniz',
-                      style: TextStyle(fontSize: 16),
-                    ),
+          Padding(
+            padding: const EdgeInsets.symmetric(
+              horizontal: 16,
+            ),
+            child: Column(
+              children: [
+                const ListTile(
+                  title: Text(
+                    'Gerçekleşen Tüketim',
+                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
                   ),
-                  const SizedBox(height: 16),
-                  DropdownButton<String>(
-                    items: dropdownItems.map((String value) {
-                      return DropdownMenuItem(
-                        child: Text(value),
-                        value: value,
-                      );
-                    }).toList(),
-                    onChanged: (value) {
-                      setState(() {
-                        selectedStation = value;
-                        selectedStationId = dropdownItems.indexOf(value!);
-                      });
-                    },
-                    value: selectedStation,
-                    hint: const Text('İstasyon Seçin'),
-                    isExpanded: true,
+                  subtitle: Text(
+                    'Tüketim miktarlarınızı görebilirsiniz',
+                    style: TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 16),
-                  Column(
-                    children: bildirimVeriler.map((veri) {
-                      return RadioListTile<int>(
-                        title: Text(veri['bildirim_tipi'] as String),
-                        value: veri['id'] as int,
-                        groupValue: selectedBildirim,
-                        onChanged: (value) {
-                          setState(() {
-                            selectedBildirim = value;
-                          });
-                        },
-                      );
-                    }).toList(),
-                  ),
-                  if (selectedBildirim != null)
-                    Text(
-                      'Seçilen Bildirim ID: $selectedBildirim',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    style: ElevatedButton.styleFrom(
-                      minimumSize: Size(double.infinity, 40),
-                    ),
-                    onPressed: () {
-                      _gerceklesenDatePicker();
-                    },
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.calendar_today),
-                        SizedBox(width: 8),
-                        Text(
-                          'Tarih Seçin',
-                          style: TextStyle(fontFamily: 'poppins'),
+                ),
+                const SizedBox(height: 16),
+                FutureBuilder<List<Map<String, dynamic>>>(
+                  future: fetchIstasyonData(),
+                  builder: (context, snapshot) {
+                    if (snapshot.connectionState == ConnectionState.waiting) {
+                      return CircularProgressIndicator();
+                    } else if (snapshot.hasError) {
+                      return Text('Hata: ${snapshot.error}');
+                    } else {
+                      List<Map<String, dynamic>>? istasyonlar = snapshot.data;
+                      return Container(
+                        width: double.infinity,
+                        child: DropdownButton<int>(
+                          value: selectedIstasyonId,
+                          onChanged: (int? newValue) {
+                            setState(() {
+                              selectedIstasyonId = newValue!;
+                            });
+                          },
+                          hint: Text('İstasyon Seçiniz'),
+                          items: istasyonlar?.map<DropdownMenuItem<int>>(
+                            (Map<String, dynamic> istasyon) {
+                              return DropdownMenuItem<int>(
+                                value: istasyon['id'],
+                                child: Text(istasyon['istasyon_adi']),
+                              );
+                            },
+                          ).toList(),
                         ),
-                      ],
-                    ),
+                      );
+                    }
+                  },
+                ),
+                if (selectedIstasyonId != null)
+                  Text(
+                    'Seçilen Bildirim ID: $selectedIstasyonId',
+                    style: TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(height: 16),
-                  if (selectedDate != null)
-                    Text(
-                      'Seçilen Tarih: ${selectedDate!.day}.${selectedDate!.month}.${selectedDate!.year}',
-                      style: TextStyle(fontSize: 16),
-                    ),
-                  SizedBox(height: 16),
-                  const Text(
-                    'Gerçekleşen Miktar',
-                    style: TextStyle(
-                        fontFamily: 'poppins',
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold),
+                SizedBox(height: 16),
+                Column(
+                  children: bildirimVeriler.map((veri) {
+                    return RadioListTile<int>(
+                      title: Text(veri['bildirim_tipi'] as String),
+                      value: veri['id'] as int,
+                      groupValue: selectedBildirim,
+                      onChanged: (value) {
+                        setState(() {
+                          selectedBildirim = value;
+                        });
+                      },
+                    );
+                  }).toList(),
+                ),
+                if (selectedBildirim != null)
+                  Text(
+                    'Seçilen Bildirim ID: $selectedBildirim',
+                    style: TextStyle(fontSize: 16),
                   ),
-                  const SizedBox(
-                    height: 16,
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    minimumSize: Size(double.infinity, 40),
                   ),
-                  TextField(
-                    controller: _miktargirisi,
-                    decoration: InputDecoration(
-                      labelText: 'Gerçekleşen Miktar',
-                    ),
+                  onPressed: () {
+                    _gerceklesenDatePicker();
+                  },
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(Icons.calendar_today),
+                      SizedBox(width: 8),
+                      Text(
+                        'Tarih Seçin',
+                        style: TextStyle(fontFamily: 'poppins'),
+                      ),
+                    ],
                   ),
-                  const SizedBox(height: 16),
-                  ElevatedButton(
-                    onPressed: () {
-                      _miktarGirisi();
-                    },
-                    style: ElevatedButton.styleFrom(
-                        primary: Colors.red,
-                        minimumSize: Size(double.infinity, 40)),
-                    child: const Text('Miktar Girişi Kaydet'),
+                ),
+                const SizedBox(height: 16),
+                if (selectedDate != null)
+                  Text(
+                    'Seçilen Tarih: ${selectedDate!.day}.${selectedDate!.month}.${selectedDate!.year}',
+                    style: TextStyle(fontSize: 16),
                   ),
-                ],
-              ),
+                SizedBox(height: 16),
+                const Text(
+                  'Gerçekleşen Miktar',
+                  style: TextStyle(
+                      fontFamily: 'poppins',
+                      fontSize: 22,
+                      fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(
+                  height: 16,
+                ),
+                TextField(
+                  controller: _miktargirisi,
+                  decoration: InputDecoration(
+                    labelText: 'Gerçekleşen Miktar',
+                  ),
+                ),
+                const SizedBox(height: 16),
+                ElevatedButton(
+                  onPressed: () {
+                    _miktarGirisi();
+                  },
+                  style: ElevatedButton.styleFrom(
+                      primary: Colors.red,
+                      minimumSize: Size(double.infinity, 40)),
+                  child: const Text('Miktar Girişi Kaydet'),
+                ),
+              ],
             ),
           ),
         ],
@@ -235,7 +242,7 @@ class _MiktarGirisiState extends State<MiktarGirisi> {
     DateTime parsedDate = DateTime.parse(tarihString);
     String formattedTarih = DateFormat('yyyy-MM-dd').format(parsedDate);
     if (selectedDate == null ||
-        selectedStationId == -1 ||
+        selectedBildirim == -1 ||
         selectedBildirim == null ||
         _miktargirisi.text.isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
@@ -258,7 +265,7 @@ class _MiktarGirisiState extends State<MiktarGirisi> {
           "miktar": girisMiktari,
           "tarih": formattedTarih.toString(),
           "musteri": {"id": musteriId},
-          "istasyon": {"id": selectedStationId},
+          "istasyon": {"id": selectedIstasyonId},
           "bildirim": {"id": selectedBildirim}
         }),
       );
