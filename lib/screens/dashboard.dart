@@ -197,7 +197,7 @@ class _MainPageState extends State<MainPage> {
                         ),
                         SizedBox(height: 20),
                         Text(
-                          '$aatOrani',
+                          '%$aatOrani',
                           style: TextStyle(
                             fontSize: 20,
                             color: Colors.black,

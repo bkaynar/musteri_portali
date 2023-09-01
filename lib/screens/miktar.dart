@@ -64,12 +64,12 @@ class _MiktarGirisiState extends State<MiktarGirisi> {
 
   void _gerceklesenDatePicker() async {
     DateTime? pickedDate = await showDatePicker(
-      context: context,
-      initialDate: DateTime.now(),
-      firstDate: DateTime(
-          DateTime.now().year, DateTime.now().month, DateTime.now().day - 10),
-      lastDate: DateTime(2099),
-    );
+        context: context,
+        initialDate: DateTime.now(),
+        firstDate: DateTime(
+            DateTime.now().year, DateTime.now().month, DateTime.now().day - 10),
+        lastDate: DateTime(
+            DateTime.now().year, DateTime.now().month, DateTime.now().day));
 
     if (pickedDate != null && pickedDate != selectedDate) {
       setState(() {

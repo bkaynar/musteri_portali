@@ -17,6 +17,8 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   final TextEditingController _kullaniciAdi = TextEditingController();
   final TextEditingController _sifre = TextEditingController();
+  bool _isPasswordVisible =
+      false; // Şifre görünürlüğünü kontrol etmek için değişken
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -77,23 +79,37 @@ class _LoginPageState extends State<LoginPage> {
                 padding: const EdgeInsets.symmetric(horizontal: 24),
                 child: Container(
                   decoration: BoxDecoration(
-                      color: Colors.grey[200],
-                      border: Border.all(color: Colors.white),
-                      borderRadius: BorderRadius.circular(12)),
+                    color: Colors.grey[200],
+                    border: Border.all(color: Colors.white),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
                   child: Padding(
                     padding: const EdgeInsets.only(left: 8.0),
-                    child: TextField(
+                    child: TextFormField(
                       controller: _sifre,
-                      obscureText: true, //Şifre gizleme
-                      decoration: const InputDecoration(
+                      obscureText:
+                          !_isPasswordVisible, // Şifre gizleme/gösterme özelliği
+                      decoration: InputDecoration(
                         border: InputBorder.none,
                         hintText: 'Şifre',
+                        suffixIcon: IconButton(
+                          icon: Icon(
+                            _isPasswordVisible
+                                ? Icons.visibility
+                                : Icons.visibility_off,
+                            color: Colors.grey,
+                          ),
+                          onPressed: () {
+                            setState(() {
+                              _isPasswordVisible = !_isPasswordVisible;
+                            });
+                          },
+                        ),
                       ),
                     ),
                   ),
                 ),
-              ),
-              //Giriş Butonu
+              ), //Giriş Butonu
               const SizedBox(height: 20),
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -120,21 +136,6 @@ class _LoginPageState extends State<LoginPage> {
                 ),
               ),
               const SizedBox(height: 10),
-              InkWell(
-                onTap: _navigateToForgotPassword,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      'Şifrenizi mi unuttunuz?',
-                      style: TextStyle(
-                          fontWeight: FontWeight.w400,
-                          fontSize: 16,
-                          fontFamily: 'poppins'),
-                    ),
-                  ],
-                ),
-              )
             ],
           ),
         ),

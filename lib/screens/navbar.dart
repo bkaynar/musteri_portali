@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:musteri_portali/screens/faturalar.dart';
 import 'package:musteri_portali/screens/miktar.dart';
+import 'package:musteri_portali/screens/serbesttuketicibilidirimi.dart';
+import 'package:musteri_portali/screens/tahislistesi.dart';
 import 'tehislistesi.dart';
 import 'login_page.dart';
 import 'tmbarsiv.dart';
@@ -172,7 +174,24 @@ class Navbar extends StatelessWidget {
               ListTile(
                 leading: Icon(Icons.border_color),
                 title: Text('Tahis Listesi'),
-                onTap: null,
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const TahisListesi()),
+                  );
+                },
+              ),
+              ListTile(
+                leading: Icon(Icons.border_color),
+                title: Text('Serbest Tüketici Bildirimi'),
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const SerbestTuketiciBildirimi()),
+                  );
+                },
               ),
             ],
           ),
