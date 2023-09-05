@@ -36,7 +36,7 @@ class _LoginPageState extends State<LoginPage> {
               ),
               const SizedBox(height: 30),
               const Text(
-                'BOTAŞ MÜŞTERİ PORTALI',
+                'MÜŞTERİ PORTALI',
                 style: TextStyle(
                     fontWeight: FontWeight.w500,
                     fontSize: 24,
